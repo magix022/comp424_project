@@ -78,7 +78,7 @@ class StudentAgent(Agent):
                 return (-100, (my_pos, "u"))
             else:
                 return (100, (my_pos, "u"))
-        if(depth > 3):
+        if(depth > 2):
             return (0, my_pos)
             # score = 0
             # borderCount = 0

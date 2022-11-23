@@ -13,9 +13,11 @@
             "justMyCode": true,
             "args": [
                 "--player_1",
-                "student_agent",
+                "minimax_agent",
                 "--player_2",
                 "random_agent",
+                "--board_size",
+                "4",
                 "--display"
             ]
         },
@@ -46,6 +48,27 @@
             "args": [
                 "--player_1",
                 "student_agent",
+                "--player_2",
+                "random_agent",
+                "--board_size_min",
+                "3",
+                "--board_size_max",
+                "5",
+                "--autoplay",
+                "--autoplay_runs",
+                "50"
+            ]
+        },
+        {
+            "name": "simulator.py mini_autoplay",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/emile/git/comp424_project/simulator.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--player_1",
+                "minimax_agent",
                 "--player_2",
                 "random_agent",
                 "--board_size_min",
