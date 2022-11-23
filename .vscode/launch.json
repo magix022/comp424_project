@@ -13,7 +13,7 @@
             "justMyCode": true,
             "args": [
                 "--player_1",
-                "human_agent",
+                "student_agent",
                 "--player_2",
                 "random_agent",
                 "--display"
@@ -34,6 +34,27 @@
                 "--board_size",
                 "4",
                 "--display"
+            ]
+        },
+        {
+            "name": "simulator.py autoplay",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/emile/git/comp424_project/simulator.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--player_1",
+                "student_agent",
+                "--player_2",
+                "random_agent",
+                "--board_size_min",
+                "3",
+                "--board_size_max",
+                "5",
+                "--autoplay",
+                "--autoplay_runs",
+                "50"
             ]
         },
     ]

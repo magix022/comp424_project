@@ -5,16 +5,16 @@ from copy import deepcopy
 import sys
 
 
-@register_agent("student_agent")
-class StudentAgent(Agent):
+@register_agent("minimax_agent")
+class MinimaxAgent(Agent):
     """
     A dummy class for your implementation. Feel free to use this class to
     add any helper functionalities needed for your agent.
     """
 
     def __init__(self):
-        super(StudentAgent, self).__init__()
-        self.name = "StudentAgent"
+        super(MinimaxAgent, self).__init__()
+        self.name = "MinimaxAgent"
         self.autoplay = True
         self.dir_map = {
             "u": 0,
@@ -54,41 +54,29 @@ class StudentAgent(Agent):
         my_pos = p1_pos if isMyTurn else p2_pos
         if(endgame[0]):
             self.terminal_nodes += 1
-            #print("Terminal node reached : " + str(self.terminal_nodes) + "\n")
-            if(isMyTurn):
-                if(endgame[1] > endgame[2]):
-                    return (100-depth, my_pos)
-                elif(endgame[1] < endgame[2]):
-                    return (-100+depth, my_pos)
-                else:
-                    return (0, my_pos)
+            if(endgame[1] > endgame[2]):
+                return (100-depth, my_pos)
+            elif(endgame[1] < endgame[2]):
+                return (-100+depth, my_pos)
             else:
-                if(endgame[1] > endgame[2]):
-                    return (-100+depth, my_pos)
-                elif(endgame[1] < endgame[2]):
-                    return (100-depth, my_pos)
-                else:
-                    return (0, my_pos)
+                return (0, my_pos)
         
         tiles = self.get_available_tiles(chess_board, p1_pos, p2_pos, max_step)
         if not tiles:
             self.noTiles += 1
             #print("No tile node reached : " + str(self.noTiles) + "\n")
-            if(isMyTurn):
-                return (-100, (my_pos, "u"))
-            else:
-                return (100, (my_pos, "u"))
-        if(depth > 3):
-            return (0, my_pos)
+            return (-100, (my_pos, "u"))
+        if(depth > 0):
+            return (0, p1_pos)
             # score = 0
             # borderCount = 0
-            # if chess_board[my_pos[0], my_pos[1], 0] == True:
+            # if chess_board[p1_pos[0], p1_pos[1], 0] == True:
             #     borderCount += 1
-            # if chess_board[my_pos[0], my_pos[1], 1] == True:
+            # if chess_board[p1_pos[0], p1_pos[1], 1] == True:
             #     borderCount += 1
-            # if chess_board[my_pos[0], my_pos[1], 2] == True:
+            # if chess_board[p1_pos[0], p1_pos[1], 2] == True:
             #     borderCount += 1
-            # if chess_board[my_pos[0], my_pos[1], 3] == True:
+            # if chess_board[p1_pos[0], p1_pos[1], 3] == True:
             #     borderCount += 1
 
             # if borderCount == 1:
@@ -97,20 +85,14 @@ class StudentAgent(Agent):
             #     score -= 40
             # elif borderCount == 3:
             #     score -= 90
-            
-            # if(isMyTurn):
-            #     return (score, my_pos)
-            # else:
-            #     return (-score, my_pos)
+            # return (score, (p1_pos, "l"))
 
         
         # Get all available directions
         dirs = self.dir_map.keys()
 
-        # Get the best move
-        # best_move = None
-        # best_score = -sys.maxsize
-        best_move = my_pos, "u"
+
+        best_move = my_pos
         for tile in tiles:
             for dir in dirs:
                 if(chess_board[tile[0], tile[1], self.dir_map[dir]]):
@@ -120,25 +102,18 @@ class StudentAgent(Agent):
                 new_chess_board[tile[0], tile[1], self.dir_map[dir]] = True
                 res = self.search(new_chess_board, p2_pos, p1_pos, max_step, depth+1, not isMyTurn, alpha, beta)
                 if(isMyTurn):
-                    #if(res[0] > best_score):
-                    #alpha = max(alpha, res[0])
                     if(res[0] > alpha):
                         alpha = res[0]
                         best_move = (tile, dir)
                     if(alpha >= beta):
                         return (alpha, best_move)
-                    #best_score = res[0]
-                    #best_move = (tile, dir)
                 else:
-                    #if(res[0] < best_score):
-                    #beta = min(beta, res[0])
                     if(res[0] < beta):
                         beta = res[0]
                         best_move = (tile, dir)
                     if alpha >= beta:
                         return (beta, best_move)
-                    #best_score = res[0]
-                    #best_move = (tile, dir)
+
 
         if(isMyTurn):
             return (alpha, best_move)
