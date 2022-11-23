@@ -5,8 +5,8 @@ from copy import deepcopy
 import sys
 
 
-@register_agent("minimax_agent")
-class MinimaxAgent(Agent):
+@register_agent("minimax2_agent")
+class Minimax2Agent(Agent):
 
     """
     A dummy class for your implementation. Feel free to use this class to
@@ -14,8 +14,8 @@ class MinimaxAgent(Agent):
     """
 
     def __init__(self):
-        super(MinimaxAgent, self).__init__()
-        self.name = "MinimaxAgent"
+        super(Minimax2Agent, self).__init__()
+        self.name = "Minimax2Agent"
         self.autoplay = True
         self.dir_map = {
             "u": 0,
@@ -80,11 +80,15 @@ class MinimaxAgent(Agent):
             if(isMax):
                 my_tiles = tiles
                 adv_tiles = self.get_available_tiles(chess_board, adv_pos, my_pos, max_step)
-                score += len(my_tiles) - len(adv_tiles)
+                score += 2*len(my_tiles) - 2*len(adv_tiles)
             else:
                 adv_tiles = tiles
                 my_tiles = self.get_available_tiles(chess_board, my_pos, adv_pos, max_step)
-                score += len(my_tiles) - len(adv_tiles)
+                score += 2*len(my_tiles) - 2*len(adv_tiles)
+
+            my_tiles = self.get_available_tiles(chess_board, my_pos, adv_pos, max_step*2)
+            adv_tiles = self.get_available_tiles(chess_board, adv_pos, my_pos, max_step*2)
+            score += len(my_tiles) - len(adv_tiles)
 
             return score
 
@@ -95,11 +99,11 @@ class MinimaxAgent(Agent):
             best_value = sys.maxsize
         for tile in tiles:
             for dir in dirs:
-                if(chess_board[tile[0], tile[1], self.dir_map[dir]]):
+                if(chess_board[(tile[0])[0], (tile[0])[1], self.dir_map[dir]]):
                     continue
-                p1_pos = tile
+                p1_pos = tile[0]
                 new_chess_board = deepcopy(chess_board)
-                new_chess_board[tile[0], tile[1], self.dir_map[dir]] = True
+                new_chess_board[(tile[0])[0], (tile[0])[1], self.dir_map[dir]] = True
                 res = self.minimaxValue(new_chess_board, p2_pos, p1_pos, max_step, depth+1, not isMax, alpha, beta)
                 if(isMax):
                     if(res > alpha):
@@ -129,11 +133,11 @@ class MinimaxAgent(Agent):
         tiles = self.get_available_tiles(chess_board, p1_pos, p2_pos, max_step)
         for tile in tiles:
             for dir in dirs:
-                if(chess_board[tile[0], tile[1], self.dir_map[dir]]):
+                if(chess_board[(tile[0])[0], (tile[0])[1], self.dir_map[dir]]):
                     continue
-                p1_pos = tile
+                p1_pos = tile[0]
                 new_chess_board = deepcopy(chess_board)
-                new_chess_board[tile[0], tile[1], self.dir_map[dir]] = True
+                new_chess_board[(tile[0])[0], (tile[0])[1], self.dir_map[dir]] = True
                 res = self.minimaxValue(new_chess_board, p2_pos, p1_pos, max_step, 1, False, alpha, beta)
                 moves.append((tile, dir, res))
                 # if(res > best_value):
@@ -141,7 +145,7 @@ class MinimaxAgent(Agent):
                 #     best_move = (tile, dir)
                 if(res > alpha):
                     alpha = res
-                    best_move = (tile, dir)
+                    best_move = (tile[0], dir)
                     if(alpha >= beta):
                         break
         return best_move
@@ -150,7 +154,7 @@ class MinimaxAgent(Agent):
 
 
     def get_available_tiles(self, chess_board, my_pos, adv_pos, max_step):
-        tiles = [my_pos]
+        tiles = [(my_pos,0)]
         state_queue = [(my_pos, 0)]
         visited = {tuple(my_pos)}
         while state_queue:
@@ -168,7 +172,7 @@ class MinimaxAgent(Agent):
 
                 visited.add(tuple(next_pos))
                 state_queue.append((next_pos, cur_step + 1))
-                tiles.append(next_pos)
+                tiles.append((next_pos, cur_step) )
         
         return tiles
 
