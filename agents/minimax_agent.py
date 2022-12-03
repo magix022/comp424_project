@@ -75,7 +75,7 @@ class MinimaxAgent(Agent):
             else:
                 return 100-depth
 
-        if(depth > 2):
+        if(depth > 1):
             score = 0
             if(isMax):
                 my_tiles = tiles

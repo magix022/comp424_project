@@ -3,6 +3,7 @@ from agents.agent import Agent
 from store import register_agent
 from copy import deepcopy
 import sys
+import time
 
 
 @register_agent("minimax2_agent")
@@ -25,9 +26,10 @@ class Minimax2Agent(Agent):
         }
         self.moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
         self.turn = 0
-        self.BORDER_1 = 2
-        self.BORDER_2 = 6
-        self.BORDER_3 = 10
+        self.moves_checked = 0
+        self.turn_time = 0
+        self.max_depth = 0
+        self.max_time = 0
     def step(self, chess_board, my_pos, adv_pos, max_step):
         """
         Implement the step function of your agent here.
@@ -43,12 +45,23 @@ class Minimax2Agent(Agent):
 
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
+        if(self.turn == 0):
+            self.max_depth = 3
+            self.max_time = 29
+        else:
+            self.max_depth = 1
+            self.max_time = 1.95
+        self.turn_time = time.time()
+        start_time = time.time()
         self.turn += 1
+        self.moves_checked = 0
         move = self.search(chess_board, my_pos, adv_pos, max_step)
-        # dummy return
+        end_time = time.time()
+        print("Checked " + str(self.moves_checked) + " moves in " + str(end_time-start_time) + " seconds")
         return move[0], self.dir_map[move[1]]
 
     def minimaxValue(self, chess_board, p1_pos, p2_pos, max_step, depth, isMax, alpha, beta):
+        self.moves_checked += 1
         endgame = self.check_endgame(chess_board, p1_pos, p2_pos)
         my_pos = p1_pos if isMax else p2_pos
         adv_pos = p2_pos if isMax else p1_pos
@@ -75,7 +88,7 @@ class Minimax2Agent(Agent):
             else:
                 return 100-depth
 
-        if(depth > 2):
+        if(depth > self.max_depth):
             score = 0
             if(isMax):
                 my_tiles = tiles
@@ -115,6 +128,11 @@ class Minimax2Agent(Agent):
                         beta = res
                     if(alpha >= beta):
                         return beta
+                if(time.time() - self.turn_time > self.max_time):
+                    if(isMax):
+                        return alpha
+                    else:
+                        return beta
         if(isMax):
             return alpha
         else:
@@ -148,6 +166,9 @@ class Minimax2Agent(Agent):
                     best_move = (tile[0], dir)
                     if(alpha >= beta):
                         break
+
+                # if(time.time() - self.turn_time > 1.90):
+                #     return best_move
         return best_move
 
         
@@ -172,7 +193,8 @@ class Minimax2Agent(Agent):
 
                 visited.add(tuple(next_pos))
                 state_queue.append((next_pos, cur_step + 1))
-                tiles.append((next_pos, cur_step) )
+                tiles.append((next_pos, cur_step))
+                #tiles.insert(0,(next_pos, cur_step))
         
         return tiles
 
