@@ -3,10 +3,12 @@ from agents.agent import Agent
 from store import register_agent
 from copy import deepcopy
 import sys
+import time
 
 
 @register_agent("student_agent")
 class StudentAgent(Agent):
+
     """
     A dummy class for your implementation. Feel free to use this class to
     add any helper functionalities needed for your agent.
@@ -23,9 +25,11 @@ class StudentAgent(Agent):
             "l": 3,
         }
         self.moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
-        self.terminal_nodes = 0
-        self.noTiles = 0
-
+        self.turn = 0
+        self.moves_checked = 0
+        self.turn_time = 0
+        self.max_depth = 0
+        self.max_time = 0
     def step(self, chess_board, my_pos, adv_pos, max_step):
         """
         Implement the step function of your agent here.
@@ -41,113 +45,136 @@ class StudentAgent(Agent):
 
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
-        self.terminal_nodes = 0
-        self.noTiles = 0
-        move = self.search(chess_board, my_pos, adv_pos, max_step, 0, True, -sys.maxsize, sys.maxsize)[1]
-        # dummy return
+        if(self.turn == 0):
+            self.max_depth = 3
+            self.max_time = 29
+        else:
+            if chess_board.shape[0] > 7:
+                self.max_depth = 1
+            else:
+                self.max_depth = 2
+            self.max_time = 1.95
+        self.turn_time = time.time()
+        start_time = time.time()
+        self.turn += 1
+        self.moves_checked = 0
+        move = self.search(chess_board, my_pos, adv_pos, max_step)
+        end_time = time.time()
+        #print("Checked " + str(self.moves_checked) + " moves in " + str(end_time-start_time) + " seconds")
         return move[0], self.dir_map[move[1]]
+
+    def minimaxValue(self, chess_board, p1_pos, p2_pos, max_step, depth, isMax, alpha, beta):
+        self.moves_checked += 1
+        endgame = self.check_endgame(chess_board, p1_pos, p2_pos)
+        my_pos = p1_pos if isMax else p2_pos
+        adv_pos = p2_pos if isMax else p1_pos
+        if(endgame[0]):
+            if(isMax):
+                if(endgame[1] > endgame[2]):
+                    return 100-depth
+                elif(endgame[1] < endgame[2]):
+                    return -100+depth
+                else:
+                    return 0
+            else:
+                if(endgame[1] > endgame[2]):
+                    return -100+depth
+                elif(endgame[1] < endgame[2]):
+                    return 100-depth
+                else:
+                    return 0
+
+        tiles = self.get_available_tiles(chess_board, p1_pos, p2_pos, max_step)
+        if not tiles:
+            if(isMax):
+                return -100+depth
+            else:
+                return 100-depth
+
+        if(depth > self.max_depth):
+            score = 0
+            if(isMax):
+                my_tiles = tiles
+                adv_tiles = self.get_available_tiles(chess_board, adv_pos, my_pos, max_step)
+                score += 2*len(my_tiles) - 2*len(adv_tiles)
+            else:
+                adv_tiles = tiles
+                my_tiles = self.get_available_tiles(chess_board, my_pos, adv_pos, max_step)
+                score += 2*len(my_tiles) - 2*len(adv_tiles)
+
+            my_tiles = self.get_available_tiles(chess_board, my_pos, adv_pos, max_step*2)
+            adv_tiles = self.get_available_tiles(chess_board, adv_pos, my_pos, max_step*2)
+            score += len(my_tiles) - len(adv_tiles)
+
+            return score
+
+        dirs = self.dir_map.keys()
+        # if(isMax):
+        #     best_value = -sys.maxsize
+        # else:
+        #     best_value = sys.maxsize
+        for tile in tiles:
+            for dir in dirs:
+                if(chess_board[(tile[0])[0], (tile[0])[1], self.dir_map[dir]]):
+                    continue
+                p1_pos = tile[0]
+                new_chess_board = deepcopy(chess_board)
+                new_chess_board[(tile[0])[0], (tile[0])[1], self.dir_map[dir]] = True
+                res = self.minimaxValue(new_chess_board, p2_pos, p1_pos, max_step, depth+1, not isMax, alpha, beta)
+                if(isMax):
+                    if(res > alpha):
+                        alpha = res
+                    if(alpha >= beta):
+                        return alpha
+                else:
+                    if(res < beta):
+                        beta = res
+                    if(alpha >= beta):
+                        return beta
+                if(time.time() - self.turn_time > self.max_time):
+                    if(isMax):
+                        return alpha
+                    else:
+                        return beta
+        if(isMax):
+            return alpha
+        else:
+            return beta
+
 
     # Search for the best move
     # Use minimax with alpha-beta pruning
-    def search(self, chess_board, p1_pos, p2_pos, max_step, depth, isMyTurn, alpha, beta):
-        endgame = self.check_endgame(chess_board, p1_pos, p2_pos)
-        my_pos = p1_pos if isMyTurn else p2_pos
-        if(endgame[0]):
-            self.terminal_nodes += 1
-            #print("Terminal node reached : " + str(self.terminal_nodes) + "\n")
-            if(isMyTurn):
-                if(endgame[1] > endgame[2]):
-                    return (100-depth, my_pos)
-                elif(endgame[1] < endgame[2]):
-                    return (-100+depth, my_pos)
-                else:
-                    return (0, my_pos)
-            else:
-                if(endgame[1] > endgame[2]):
-                    return (-100+depth, my_pos)
-                elif(endgame[1] < endgame[2]):
-                    return (100-depth, my_pos)
-                else:
-                    return (0, my_pos)
-        
-        tiles = self.get_available_tiles(chess_board, p1_pos, p2_pos, max_step)
-        if not tiles:
-            self.noTiles += 1
-            #print("No tile node reached : " + str(self.noTiles) + "\n")
-            if(isMyTurn):
-                return (-100, (my_pos, "u"))
-            else:
-                return (100, (my_pos, "u"))
-        if(depth > 2):
-            return (0, my_pos)
-            # score = 0
-            # borderCount = 0
-            # if chess_board[my_pos[0], my_pos[1], 0] == True:
-            #     borderCount += 1
-            # if chess_board[my_pos[0], my_pos[1], 1] == True:
-            #     borderCount += 1
-            # if chess_board[my_pos[0], my_pos[1], 2] == True:
-            #     borderCount += 1
-            # if chess_board[my_pos[0], my_pos[1], 3] == True:
-            #     borderCount += 1
-
-            # if borderCount == 1:
-            #     score -= 10
-            # elif borderCount == 2:
-            #     score -= 40
-            # elif borderCount == 3:
-            #     score -= 90
-            
-            # if(isMyTurn):
-            #     return (score, my_pos)
-            # else:
-            #     return (-score, my_pos)
-
-        
-        # Get all available directions
+    def search(self, chess_board, p1_pos, p2_pos, max_step):
+        moves = []
+        alpha = -sys.maxsize
+        beta = sys.maxsize
         dirs = self.dir_map.keys()
-
-        # Get the best move
-        # best_move = None
-        # best_score = -sys.maxsize
-        best_move = my_pos, "u"
+        #best_value = -sys.maxsize
+        best_move = p1_pos
+        tiles = self.get_available_tiles(chess_board, p1_pos, p2_pos, max_step)
         for tile in tiles:
             for dir in dirs:
-                if(chess_board[tile[0], tile[1], self.dir_map[dir]]):
+                if(chess_board[(tile[0])[0], (tile[0])[1], self.dir_map[dir]]):
                     continue
-                p1_pos = tile
+                p1_pos = tile[0]
                 new_chess_board = deepcopy(chess_board)
-                new_chess_board[tile[0], tile[1], self.dir_map[dir]] = True
-                res = self.search(new_chess_board, p2_pos, p1_pos, max_step, depth+1, not isMyTurn, alpha, beta)
-                if(isMyTurn):
-                    #if(res[0] > best_score):
-                    #alpha = max(alpha, res[0])
-                    if(res[0] > alpha):
-                        alpha = res[0]
-                        best_move = (tile, dir)
-                    if(alpha >= beta):
-                        return (alpha, best_move)
-                    #best_score = res[0]
-                    #best_move = (tile, dir)
-                else:
-                    #if(res[0] < best_score):
-                    #beta = min(beta, res[0])
-                    if(res[0] < beta):
-                        beta = res[0]
-                        best_move = (tile, dir)
-                    if alpha >= beta:
-                        return (beta, best_move)
-                    #best_score = res[0]
-                    #best_move = (tile, dir)
+                new_chess_board[(tile[0])[0], (tile[0])[1], self.dir_map[dir]] = True
+                res = self.minimaxValue(new_chess_board, p2_pos, p1_pos, max_step, 1, False, alpha, beta)
+                moves.append((tile, dir, res))
 
-        if(isMyTurn):
-            return (alpha, best_move)
-        else:
-            return (beta, best_move)
+                if(res > alpha):
+                    alpha = res
+                    best_move = (tile[0], dir)
+                    if(alpha >= beta):
+                        break
+
+        return best_move
+
+        
 
 
     def get_available_tiles(self, chess_board, my_pos, adv_pos, max_step):
-        tiles = [my_pos]
+        tiles = [(my_pos,0)]
         state_queue = [(my_pos, 0)]
         visited = {tuple(my_pos)}
         while state_queue:
@@ -165,7 +192,8 @@ class StudentAgent(Agent):
 
                 visited.add(tuple(next_pos))
                 state_queue.append((next_pos, cur_step + 1))
-                tiles.append(next_pos)
+                tiles.append((next_pos, cur_step))
+                #tiles.insert(0,(next_pos, cur_step))
         
         return tiles
 
@@ -229,10 +257,4 @@ class StudentAgent(Agent):
             win_blocks = p1_score
         else:
             player_win = -1  # Tie
-        # if player_win >= 0:
-        #     logging.info(
-        #         f"Game ends! Player {self.player_names[player_win]} wins having control over {win_blocks} blocks!"
-        #     )
-        # else:
-        #     logging.info("Game ends! It is a Tie!")
         return True, p0_score, p1_score
