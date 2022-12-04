@@ -49,7 +49,10 @@ class Minimax2Agent(Agent):
             self.max_depth = 3
             self.max_time = 29
         else:
-            self.max_depth = 1
+            if chess_board.shape[0] > 7:
+                self.max_depth = 1
+            else:
+                self.max_depth = 2
             self.max_time = 1.95
         self.turn_time = time.time()
         start_time = time.time()
